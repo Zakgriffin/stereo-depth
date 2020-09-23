@@ -1,0 +1,19 @@
+[package]
+name = "stereo-depth"
+version = "0.1.0"
+authors = ["Zak Griffin <zakgriffin1209@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = "0.23.9"
+show-image = "0.6.4"
+minifb = "0.19"
+
+# [dependencies.stereo-depth]
+# default-features = true
+# features = ["image"]
+
+# [features]
+# default = ["image"]
