@@ -21,7 +21,7 @@ use general::{rgb2gray, ShowImageWrapperGray};
 use image::{open, GrayImage, RgbImage};
 use show_image::{make_window, KeyCode};
 
-const ROOT_PATH: &str = r"C:\Users\zakgr\OneDrive\Desktop\stereo-depth\src\images\";
+const ROOT_PATH: &str = r"C:\Users\zakgr\Desktop\stereo-depth\src\images\";
 
 fn main() {
     depth();
