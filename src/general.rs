@@ -1,3 +1,5 @@
+use std::ops::Sub;
+
 use image::Luma;
 use image::{GrayImage, Pixel, RgbImage};
 use show_image::PixelFormat::{Mono8, Rgb8};
@@ -69,5 +71,14 @@ impl ImageData for ShowImageWrapperRgb {
             row_stride: self.image.width() as usize * 3,
             pixel_format: Rgb8,
         })
+    }
+}
+
+// https://github.com/rust-lang/rust/issues/62111
+pub fn abs_difference<T: Sub<Output = T> + Ord>(x: T, y: T) -> T {
+    if x < y {
+        y - x
+    } else {
+        x - y
     }
 }
