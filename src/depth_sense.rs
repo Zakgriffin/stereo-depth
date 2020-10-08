@@ -23,7 +23,7 @@ use std::cmp::min;
 //     }
 // }
 
-pub fn depth_sense(
+pub fn depth_sense_old(
     image_l: &Box<GrayImage>,
     image_r: &Box<GrayImage>,
     block_size: Block,
@@ -38,7 +38,7 @@ pub fn depth_sense(
             let window_left = image_l.view(x, y, block_size.width, block_size.height);
             let mut best_dif = u32::MAX;
             let mut disparity_val = 0;
-            for x_scan in (x..min(x + search_range, width - block_size.width)).step_by(2) {
+            for x_scan in (x..min(x + search_range, width - block_size.width)).step_by(1) {
                 let window_right = image_r.view(x_scan, y, block_size.width, block_size.height);
                 let dif = image_dif(&window_left, &window_right, &block_size);
                 if dif < best_dif {
@@ -65,7 +65,7 @@ pub fn depth_sense(
     disparity_map
 }
 
-pub fn depth_sense_rayon(
+pub fn depth_sense(
     image_l: &Box<GrayImage>,
     image_r: &Box<GrayImage>,
     block_size: Block,
@@ -77,7 +77,48 @@ pub fn depth_sense_rayon(
 
     let mut disparity_map_vec = vec![0u8; (w * h) as usize];
 
-    let cores = num_cpus::get();
+    for y in 0..h {
+        for x in 0..w {
+            let x_scaled = x * block_size.width;
+            let y_scaled = y * block_size.height;
+
+            let window_left = image_l.view(x_scaled, y_scaled, block_size.width, block_size.height);
+            let mut best_dif = u32::MAX;
+            let mut disparity_val = 0;
+            for x_scan in
+                (x_scaled..min(x_scaled + search_range, width - block_size.width)).step_by(1)
+            {
+                let window_right =
+                    image_r.view(x_scan, y_scaled, block_size.width, block_size.height);
+                let dif = image_dif(&window_left, &window_right, &block_size);
+                if dif < best_dif {
+                    best_dif = dif;
+                    disparity_val = x_scan as i32 - x_scaled as i32;
+                    if dif == 0 {
+                        break;
+                    }
+                }
+            }
+            disparity_map_vec[(x + (y * w)) as usize] = disparity_val as u8;
+        }
+    }
+
+    Box::new(GrayImage::from_vec(w, h, disparity_map_vec).unwrap())
+}
+
+pub fn depth_sense_rayon(
+    image_l: &Box<GrayImage>,
+    image_r: &Box<GrayImage>,
+    block_size: Block,
+    search_range: u32,
+    cores: usize,
+) -> Box<GrayImage> {
+    let (width, height) = image_l.dimensions();
+    let w = width / block_size.width;
+    let h = height / block_size.height;
+
+    let mut disparity_map_vec = vec![0u8; (w * h) as usize];
+
     let vec_len = disparity_map_vec.len();
     let slice_length_max = vec_len / cores;
 
@@ -107,7 +148,7 @@ pub fn depth_sense_rayon(
                     let mut best_dif = u32::MAX;
                     let mut disparity_val = 0;
                     for x_scan in (x_scaled..min(x_scaled + search_range, width - block_size.width))
-                        .step_by(2)
+                        .step_by(1)
                     {
                         let window_right =
                             image_r.view(x_scan, y_scaled, block_size.width, block_size.height);
@@ -173,7 +214,7 @@ pub fn depth_sense_gpu(
                     let mut best_dif = u32::MAX;
                     let mut disparity_val = 0;
                     for x_scan in (x_scaled..min(x_scaled + search_range, width - block_size.width))
-                        .step_by(2)
+                        .step_by(1)
                     {
                         let window_right =
                             image_r.view(x_scan, y_scaled, block_size.width, block_size.height);
